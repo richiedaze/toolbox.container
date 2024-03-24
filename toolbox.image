@@ -1,0 +1,10 @@
+# toolbox.image
+# Quadlet image template for toolbox  
+# copyright 2023 @richiedaze:fedora.im
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[Image]
+# The image to pull.  It is recommended to use a fully qualified image name rather than a short name, both for performance and robustness reasons.
+# The format of the name is the same as when passed to podman pull. So, it supports using :tag or digests to guarantee the specific image version.
+
+Image=registry.fedoraproject.org/fedora-toolbox:39

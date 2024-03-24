@@ -1,0 +1,167 @@
+# fedora-toolbox.container
+# Quadlet container template for toolbox  
+# copyright 2022 @richiedaze:fedora.im
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[Unit]
+AssertFileIsExecutable=/usr/bin/toolbox
+Description=Quadlet container template for toolbox 
+Documentation=man:podman-systemd.unit(5)
+Documentation=man:toolbox-init-container(1)
+Documentation=man:toolbox(1) 
+#OnSuccess=podman-auto-update@fedora-toolbox
+
+[Container]
+# Quadlet Container settings
+
+# Add Capabilities
+AddCapability=CAP_SYS_ADMIN
+
+# Autoupdate mode
+AutoUpdate=registry
+
+# The name of the container
+ContainerName=%p-%w
+
+# Environmental variables inside container.
+Environment=TOOLBOX_NAME=%p
+Environment=TOOLBOX_PATH=/usr/bin/%j
+
+# Initial command inside container.
+Exec=%j init-container \
+    --log-level info \
+        --home %h \
+        --shell %s \
+        --user %u \
+        --uid %U \
+        --gid %G \
+        --home-link \
+        --media-link \
+        --mnt-link
+        
+# Show logs of this Container in Debug mode.
+#GlobalArgs=--log-level debug
+
+# Name of the host in the Container.
+#HostName=%p
+
+# Location of the base image.
+Image=registry.fedoraproject.org/%p:%w
+
+# Container's mounts
+Mount=type=devpts,destination=/dev/pts
+
+# The network of the container.
+Network=host
+
+# Create and/or attach a parent container - pod
+#Pod=%p
+
+# Features otherwise unsupported by the Quadlet generator.
+PodmanArgs=--dns none
+#PodmanArgs=--group-add keep-groups
+PodmanArgs=--ipc host
+PodmanArgs=--no-hosts
+PodmanArgs=--pid host
+PodmanArgs=--pod %j
+#PodmanArgs=--privileged
+
+# Disable security labels 
+SecurityLabelDisable=true
+
+# User preferences
+User=root:root
+#UserNS=keep-id
+
+# Volumes
+
+# Bind Non-volatile Overlayered volumes onto the container.
+#Volume=%j-etc-dnf:/etc/dnf:O,upperdir=%S/%j/%p/etc/dnf,workdir=%S/%j/%p/workdir/1
+Volume=%j-usr:/usr:O,upperdir=%S/%j/%p/usr,workdir=%S/%j/%p/workdir/2
+Volume=%j-var:/var:O,upperdir=%S/%j/%p/var,workdir=%S/%j/%p/workdir/3
+
+# Bind Non-volatile Overlayered host's SELinux directories onto the container.
+Volume=/etc/selinux:/etc/selinux:O,upperdir=%S/%j/%p/etc/selinux,workdir=%S/%j/%p/workdir/4
+Volume=/usr/share/selinux:/usr/share/selinux:O,upperdir=%S/%j/%p/usr/share/selinux,workdir=%S/%j/%p/workdir/5
+
+# Bind host's directories onto the container.
+Volume=/dev:/dev:rslave
+Volume=/run/user/%U:/run/user/%U
+Volume=/run/media:/run/media:rslave
+
+# Bind host's root directory onto the container.
+Volume=/:/run/host:rslave
+
+# Bind host's sockets onto the container.
+Volume=/run/.heim_org.h5l.kcm-socket:/run/.heim_org.h5l.kcm-socket
+Volume=/run/avahi-daemon/socket:/run/avahi-daemon/socket
+Volume=/run/dbus/system_bus_socket:/run/dbus/system_bus_socket
+Volume=/run/pcscd/pcscd.comm:/run/pcscd/pcscd.comm
+
+# Bind host's toolbox profile and executable onto the container.
+Volume=/etc/profile.d/%j.sh:/etc/profile.d/%j.sh:ro
+Volume=/usr/bin/%j:/usr/bin/%j:ro
+
+# Bind Home directory onto the container.
+
+# 1. Bind default home directory.
+#    Use home directory normally. (toolbox default)
+#Volume=%h:%h:rslave
+
+# 2. Bind overlay on custom skeleton directory.
+
+# 2a. Temporary (volatile overlayer).
+#     Use a new overlayered skeleton directory every time.
+#Volume=%E/skel:%h:O
+
+# 2b. Permanent (non-volatile overlayer).
+#     Use saved overlayered skeleton directory.
+Volume=%E/skel:%h:O,upperdir=%S/%j/%p%h,workdir=%S/%j/%p/workdir/6
+
+# 3. Bind extra home directories
+Volume=%h/.local/src:%h/.local/src:rslave
+
+# Working directory inside the container.
+WorkingDir=%h
+
+[Service]
+
+# Show logs of this Service in Debug mode.
+#Environment=SYSTEMD_LOG_LEVEL=debug
+
+# Create a parent container - pod
+ExecStartPre=-podman pod create \
+    --hostname %p \
+    --name %p \
+    --userns keep-id 
+    
+# Clone missing home skeleton directory.
+ExecStartPre=bash -c 'test -d %E/skel || \
+    cp --recursive /etc/skel %E'
+
+# Create Non-volatile overlayer directories.
+ExecStartPre=-bash -c 'mkdir --parents \
+    --context=system_u:object_r:container_file_t:s0:c1022,c1023 \
+        %S/%j/%p/etc/dnf \
+        %S/%j/%p/etc/selinux \
+        %S/%j/%p/%h \
+        %S/%j/%p/usr/share/selinux \
+        %S/%j/%p/usr \
+        %S/%j/%p/var \
+        %S/%j/%p/workdir/{1..6} '
+
+# Remove volumes on podman auto-update
+#ExecStopPost=-podman volume rm --force \
+#    %j-etc-dnf \
+#    %j-usr \
+#    %j-var
+    
+# Extend Timeout to allow time to pull the image
+TimeoutStartSec=900
+
+# Working directory inside the service.
+#WorkingDirectory=%S/%j/%p/workdir/
+
+[Install]
+# Start on user login
+WantedBy=graphical-session.target

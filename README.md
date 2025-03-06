@@ -1,43 +1,66 @@
-# toolbox.container
-A collection of Quadlet container templates for toolbox 
+# toolbx.container
+### A collection of Quadlet container templates for toolbx
+
+## Base toolbx
+- **Default image:** Current Version of registry.fedoraproject.org/fedora-toolbox
+- **Default container name:** (instance name)-toolbx
+- **Default template chart**
+
   |Template|Description|
-  -|- 
-  **toolbox.pod** | **Parent pod for toolbox containers to attach to.**
-  | | Not yet available on current podman version. Currently set in toolbox<span>@</span>.container until next release.
-  |||
-  **toolbox.image** | **Default image set by the Quadlet default configuration.**
-  |||
-  **toolbox<span>@</span>.container** | **Default Quadlet toolbox container configuration.**
-  toolbox<span>@</span>fedora.container | Should be Default Instance to toolbox<span>@</span>.container but doesn't work. We can use the fedora-toolbox.container for now.
-  | | 
-  **toolbox<span>@</span>ubuntu.container.d** | Override configuration for a ubuntu instance.
-  | | Not yet available on current podman version.
-  |||
-  **fedora-toolbox.container** | toolbox<span>@</span>.container modified for fedora instance.
-  |||
+  -|-
+  **[toolbx<span>@</span>.container](toolbx@.container)** | The base instruction set to build a default toolbx container.
+  **toolbx<span>@</span>.container.d** | The drop-in directory contaning the override instruction set to build a toolbx container. 
+  **[toolbx<span>@</span>.container.d/debug.conf](toolbx@.container.d/debug.conf)** | Allow sending debugging messages to journal from this service.
+  **[toolbx<span>@</span>.container.d/homedir.conf](toolbx@.container.d/homedir.conf)** | Allow temporary or container allocated home directory alternatives.
+
+## toolbx@fedora
+- **Modified image:** Not modified
+- **Modified container name:** fedora-toolbox-\$\{VERSION\}.
+- **Modified Template chart**
+
+  |Template|Description|
+  -|-
+  **toolbx<span>@</span>fedora.container.d** | The drop-in directory contaning the override instruction set to build a fedora toolbx container. This directory's content is only read if toolbx<span>@</span>fedora.container exist.
+  **toolbx<span>@</span>fedora.container** | Should be a link to toolbx<span>@</span>.container. but renamed after it's instance. Customization's should be made in the  
 
 ## Installation
-  1. Create a Quadlet user configuration directory.
+
+1. Download or clone this repository.
+  1. Create a Quadlet user configuration directory, if one does not exist.
 
       ```sh
-      mkdir --parents \
-        ~/config/containers/systemd
+      mkdir --parents ~/config/containers/systemd
       ```
       Place Quadlet configuration files in the above directory.
       
-  2. View the generated files and/or error messages with:
+  2. Reload systemd user manager configuration
 
       ```sh
-      /usr/lib/systemd/system-generators/podman-system-generator --user --dryrun
+		systemctl --user daemon-reload
       ```
+## Debugging quadlet files
+1. View the generated files and/or error messages with:
+
+	```sh
+    /usr/libexec/podman/quadlet -user -dryrun
+	```
+
+2. Read and verify every modification you intended is correct.
       
-  3. Start a toolbox container
+## Usage
+  1. Create a toolbx container with the following command:
 
       ```sh
-      systemctl --user start toolbox@fedora
+      systemctl --user start toolbx@fedora
       ```
-  4. Edit toolbox container
+  2. Enter the toolbx
+	  ```sh
+	  toolbox enter
+	  ```
 
-     ```sh
-     systemctl --user edit toolbox@fedora
-     ```
+---
+
+|Notes|
+-|
+|- All system modifications to the container will be lost once it's terminated. Persistent modifications are highly encouraged on the image of the container, then by overriding the configuration of the image location.
+

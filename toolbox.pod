@@ -1,9 +1,0 @@
-# toolbox.pod
-# Quadlet image template for toolbox  
-# copyright 2024 @richiedaze:fedora.im
-# SPDX-License-Identifier: GPL-3.0-or-later
-
-[Pod]
-GlobalArgs=--hostname %p
-GlobalArgs=--userns keep-id
-PodName=%p

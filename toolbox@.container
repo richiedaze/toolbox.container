@@ -9,14 +9,12 @@
 
 [Unit]
 AssertFileIsExecutable=/usr/bin/toolbox
-Description=Quadlet container template for toolbox
+Description=Toolbox Container template
 Documentation=man:podman-systemd.unit(5)
 Documentation=man:toolbox-init-container(1)
-Documentation=man:toolbox(1) 
+Documentation=man:toolbox(1)
 
 [Container]
-# Quadlet Container settings
-
 # Add Capabilities
 AddCapability=CAP_SYS_ADMIN
 
@@ -26,11 +24,16 @@ AutoUpdate=registry
 # The name of the container
 ContainerName=%i-%p
 
+#DNS mode
+#DNS=none
+#Error: none is not allowed to be specified with other DNS ip addresses
+
 # Environmental variables inside container.
 Environment=TOOLBOX_NAME=%i-%p
 Environment=TOOLBOX_PATH=/usr/bin/%p
 
 # Initial command inside container.
+# rm for homed --home-link \
 Exec=%p init-container \
     --log-level info \
         --home %h \
@@ -38,7 +41,6 @@ Exec=%p init-container \
         --user %u \
         --uid %U \
         --gid %G \
-        --home-link \
         --media-link \
         --mnt-link
         
@@ -46,10 +48,10 @@ Exec=%p init-container \
 #GlobalArgs=--log-level debug
 
 # Name of the host in the Container.
-#HostName=%i-%p
+HostName=%i-%p
 
 # Location of the base image.
-Image=toolbox.image
+Image=registry.fedoraproject.org/fedora-toolbox:%w
 
 # Container's mounts
 Mount=type=devpts,destination=/dev/pts
@@ -57,44 +59,22 @@ Mount=type=devpts,destination=/dev/pts
 # The network of the container.
 Network=host
 
-# Create and/or attach a parent container - pod
-#Pod=%p
-
 # Features otherwise unsupported by the Quadlet generator.
-PodmanArgs=--dns none
-#PodmanArgs=--group-add keep-groups
+PodmanArgs=--dns=none
 PodmanArgs=--ipc host
 PodmanArgs=--no-hosts
 PodmanArgs=--pid host
-PodmanArgs=--pod %p
-#PodmanArgs=--privileged
 
 # Disable security labels 
 SecurityLabelDisable=true
 
-# Rootless mappings
-#
-# Default mapping
-#UIDMap=0:${UID}:1
-#GIDMap=0:${GID}:1
-#
-#UIDMap=0:1${UID}
-#GIDMap=0:1${GID}
-#UIDMap=${UID}:0:1
-#GIDMap=${GID}:0:1
-#UIDMap=${UID}:${UID}:65536
-#GIDMap=${GID}:${GID}:65536
-
 # User preferences
 User=root:root
-#UserNS=keep-id
+
+# User namespace
+UserNS=keep-id
 
 # Volumes
-
-# Bind Non-volatile Overlayered volumes onto the container.
-#Volume=%i-%p-etc-dnf:/etc/dnf:O,upperdir=%S/%p/%i-%p/etc/dnf,workdir=%S/%p/%i-%p/workdir/1
-Volume=%i-%p-usr:/usr:O,upperdir=%S/%p/%i-%p/usr,workdir=%S/%p/%i-%p/workdir/2
-Volume=%i-%p-var:/var:O,upperdir=%S/%p/%i-%p/var,workdir=%S/%p/%i-%p/workdir/3
 
 # Bind host's directories onto the container.
 Volume=/dev:/dev:rslave
@@ -115,60 +95,22 @@ Volume=/etc/profile.d/%p.sh:/etc/profile.d/%p.sh:ro
 Volume=/usr/bin/%p:/usr/bin/%p:ro
 
 # Bind Home directory onto the container.
-
-# 1. Bind default home directory.
-#    Use home directory normally. (toolbox default)
-#Volume=%h:%h:rslave
-
-# 2. Bind overlay on custom skeleton directory.
-
-# 2a. Temporary (volatile overlayer).
-#     Use a new overlayered skeleton directory every time.
-#Volume=%E/skel:%h:O
-
-# 2b. Permanent (non-volatile overlayer).
-#     Use saved overlayered skeleton directory.
-Volume=%E/skel:%h:O,upperdir=%S/%p/%i-%p%h,workdir=%S/%p/%i-%p/workdir/4
+Volume=${BINDING_HOME}
 
 # Working directory inside the container.
-WorkingDir=%h
+#WorkingDir=/
 
 [Service]
 # Show logs of this Service in Debug mode.
-#Environment=SYSTEMD_LOG_LEVEL=debug
+# Environment=SYSTEMD_LOG_LEVEL=debug
 
-# Create a parent container - pod
-ExecStartPre=-podman pod create \
-    --hostname %p \
-    --name %p \
-    --userns keep-id 
+# Use home directory normally. (toolbox default)
+# Use drop-in file to change home director
+Environment=BINDING_HOME="%h:%h:rslave"
 
-# Clone missing home skeleton directory.
-ExecStartPre=bash -c 'test -d %E/skel || \
-    cp --recursive /etc/skel %E'
-
-# Create Non-volatile overlayer directories.
-ExecStartPre=-bash -c 'mkdir --parents \
-    --context=system_u:object_r:container_file_t:s0:c1022,c1023 \
-        %S/%p/%i-%p/etc/dnf \
-        %S/%p/%i-%p/%h \
-        %S/%p/%i-%p/usr \
-        %S/%p/%i-%p/var \
-        %S/%p/%i-%p/workdir/{1..4} '
-
-# ??? Rebuild volumes after podman auto-update
-#ExecStopPost=-podman volume rm --force \
-#    %i-%p-etc-dnf \
-#    %i-%p-usr \
-#    %i-%p-var
-    
 # Extend Timeout to allow time to pull the image
 TimeoutStartSec=900
 
-# Working directory for this service.
-#WorkingDirectory=%S/%p/%i-%p/workdir/
-
 [Install]
-DefaultInstance=fedora
 # Start on user login
 #WantedBy=graphical-session.target

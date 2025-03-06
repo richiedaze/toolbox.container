@@ -21,7 +21,7 @@
   |Template|Description|
   -|-
   **toolbx<span>@</span>fedora.container.d** | The drop-in directory contaning the override instruction set to build a fedora toolbx container. This directory's content is only read if toolbx<span>@</span>fedora.container exist.
-  **toolbx<span>@</span>fedora.container** | Should be a link to toolbx<span>@</span>.container. but renamed after it's instance. Customization's should be made in the  
+  **toolbx<span>@</span>fedora.container** | Should be a link to toolbx<span>@</span>.container. but renamed after it's instance. Customization's should be made in the directory above.
 
 ## Installation
 

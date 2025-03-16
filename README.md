@@ -8,10 +8,10 @@
 
   |Template|Description|
   -|-
-  **[toolbx<span>@</span>.container](toolbx@.container)** | The base instruction set to build a default toolbx container.
+  **[toolbx<span>@</span>.container](toolbox@.container)** | The base instruction set to build a default toolbx container.
   **toolbx<span>@</span>.container.d** | The drop-in directory contaning the override instruction set to build a toolbx container. 
-  **[toolbx<span>@</span>.container.d/debug.conf](toolbx@.container.d/debug.conf)** | Allow sending debugging messages to journal from this service.
-  **[toolbx<span>@</span>.container.d/homedir.conf](toolbx@.container.d/homedir.conf)** | Allow temporary or container allocated home directory alternatives.
+  **[toolbx<span>@</span>.container.d/debug.conf](toolbox@.container.d/debug.conf)** | Allow sending debugging messages to journal from this service.
+  **[toolbx<span>@</span>.container.d/homedir.conf](toolbox@.container.d/homedir.conf)** | Allow temporary or container allocated home directory alternatives.
 
 ## toolbx@fedora
 - **Modified image:** Not modified
@@ -39,12 +39,15 @@
 		systemctl --user daemon-reload
       ```
 ## Debugging quadlet files
-1. View the generated files and/or error messages with:
+1. View the generated service files and/or error messages with:
 
 	```sh
     /usr/libexec/podman/quadlet -user -dryrun
 	```
-
+	or
+	```sh
+	systemctl --user cat toolbox@fedora
+	```
 2. Read and verify every modification you intended is correct.
       
 ## Usage

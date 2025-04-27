@@ -1,11 +1,7 @@
-# toolbx@.container
-# Quadlet container template for toolbox  
+# toolbox@.container
+# quadlet container template for toolbox
 # copyright 2022 @richiedaze:fedora.im
 # SPDX-License-Identifier: GPL-3.0-or-later
-
-# %i = instance
-# %p = program
-# %S = state
 
 [Unit]
 AssertFileIsExecutable=/usr/bin/toolbox
@@ -22,19 +18,19 @@ AddCapability=CAP_SYS_ADMIN
 AutoUpdate=registry
 
 # The name of the container
-ContainerName=%i-%p
+ContainerName=%i-toolbox
 
 #DNS mode
 #DNS=none
 #Error: none is not allowed to be specified with other DNS ip addresses
 
 # Environmental variables inside container.
-Environment=TOOLBOX_NAME=%i-%p
-Environment=TOOLBOX_PATH=/usr/bin/%p
+Environment=TOOLBOX_NAME=%i-toolbox
+Environment=TOOLBOX_PATH=/usr/bin/toolbox
 
 # Initial command inside container.
 # rm for homed --home-link \
-Exec=%p init-container \
+Exec=toolbox init-container \
     --log-level info \
         --home %h \
         --shell %s \
@@ -43,12 +39,9 @@ Exec=%p init-container \
         --gid %G \
         --media-link \
         --mnt-link
-        
-# Show logs of this Container in Debug mode.
-#GlobalArgs=--log-level debug
 
 # Name of the host in the Container.
-HostName=%i-%p
+HostName=%i-toolbox
 
 # Location of the base image.
 Image=registry.fedoraproject.org/fedora-toolbox:%w
@@ -91,26 +84,19 @@ Volume=/run/dbus/system_bus_socket:/run/dbus/system_bus_socket
 Volume=/run/pcscd/pcscd.comm:/run/pcscd/pcscd.comm
 
 # Bind host's toolbox profile and executable onto the container.
-Volume=/etc/profile.d/%p.sh:/etc/profile.d/%p.sh:ro
-Volume=/usr/bin/%p:/usr/bin/%p:ro
+Volume=/etc/profile.d/toolbox.sh:/etc/profile.d/toolbox.sh:ro
+Volume=/usr/bin/toolbox:/usr/bin/toolbox:ro
 
 # Bind Home directory onto the container.
 Volume=${BINDING_HOME}
 
 # Working directory inside the container.
-#WorkingDir=/
+WorkingDir=%h
 
 [Service]
-# Show logs of this Service in Debug mode.
-# Environment=SYSTEMD_LOG_LEVEL=debug
-
-# Use home directory normally. (toolbox default)
-# Use drop-in file to change home director
-Environment=BINDING_HOME="%h:%h:rslave"
-
 # Extend Timeout to allow time to pull the image
 TimeoutStartSec=900
 
-[Install]
-# Start on user login
-#WantedBy=graphical-session.target
+# Use home directory normally. (toolbox default)
+Environment=BINDING_HOME="%h:%h:rslave"
+
